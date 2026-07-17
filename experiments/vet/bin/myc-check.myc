@@ -1,0 +1,21 @@
+// nodule: check.bin_kw.myc_u2D_check
+// `myc-check` — the correctness/type-check driver CLI (M-365; contract
+// `docs/spec/Myc-Check-Driver-Contract.md`). The prototype grown up: it keeps the single-file **oracle**
+// mode (the KC-2 LLM-harness contract — exit 2 parse / 3 check / `--expect-main`) and adds a **project**
+// mode that checks a whole `phylum`/program and aggregates diagnostics routed via the M-362 baseline.
+//
+// ```text
+// myc-check [--expect-main <ret-type>] <file.myc | ->          # oracle (single file)
+// myc-check --project <dir> | --config <mycelium-proj.toml> [--explain]   # whole project (CI gate)
+// myc-check --phylum <dir> [--json]                            # whole-phylum cross-nodule check (M-1006)
+// ```
+//
+// Exit codes: 0 ok · 2 parse error · 3 check error · 5 project-resolution error · 64 usage · 66 I/O.
+// @summary: best-effort transpilation via mycelium-transpile (M-873). Declared,
+// unvalidated — no Mycelium parser/typechecker confirms this output; see the
+// accompanying .gap.json for every construct this pass could not express.
+nodule check.bin_kw.myc_u2D_check;
+
+// EXPLAIN (L2-B/DN-124): Declared co-include of batch-sibling type surface (homes: check) so single-file oracle is self-contained — not a language `use` identity, not a short-form path collapse (M-1084 full path retained as provenance). Transitive type deps in the same batch are co-included. G2/VR-5.
+type FindingKind = Parse | Check;
+type NoduleClass = Clean | CheckError(Bytes, Bytes) | Blocked(Bytes, Bytes);

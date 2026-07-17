@@ -1,0 +1,100 @@
+// nodule: check
+// `mycelium-check` — the project-aware correctness/type-check **driver** (M-365; the `myc-check`
+// prototype grows up).
+//
+// It resolves a `mycelium-proj.toml` project, checks the **whole** `phylum`/program, and aggregates
+// every refusal as a structured diagnostic **routed through the M-362 auto-baseline** (RFC-0013 levels +
+// routes), exiting non-zero on any error so CI can gate on it. It changes nothing about *what* the
+// checker decides — the trusted M-210 checker ([`mycelium_l1::check_nodule`]) is the base (KC-3); this is
+// the *driver* above it: discovery + aggregation + honest routing.
+//
+// Honesty: a `ParseError`/`CheckError` is an **explicit** finding with a site (never a silent pass; G2),
+// and a check refusal is routed at the baseline level/route for the umbrella `NotValidated` class —
+// `CheckError` is a flat `{site, message}`, so the driver does **not** fabricate a finer class
+// (`TypeMismatch` vs `UnresolvedName`) it cannot structurally distinguish (VR-5: report what is known,
+// never invent). Per-op guarantee tags computed by the checker are untouched.
+// @summary: best-effort transpilation via mycelium-transpile (M-873). Declared,
+// unvalidated — no Mycelium parser/typechecker confirms this output; see the
+// accompanying .gap.json for every construct this pass could not express.
+nodule check;
+
+// What kind of refusal a finding records.
+pub type FindingKind = Parse | Check;
+
+impl Show[FindingKind] for FindingKind {
+  fn render(x: FindingKind) => Bytes =
+    match x { Parse => "Parse", Check => "Check" };
+};
+
+fn eq_FindingKind(a: FindingKind, b: FindingKind) => Binary{1} =
+  match a { Parse => match b { Parse => 0b1, _ => 0b0 }, Check => match b { Check => 0b1, _ => 0b0 } };
+
+// A project-resolution failure — no/ambiguous input (no sources, an unreadable file). Exit 5.
+type ResolveError = ResolveError(Bytes);
+
+impl Show[ResolveError] for ResolveError {
+  fn render(x: ResolveError) => Bytes =
+    match x { ResolveError(p0) => bytes_concat(bytes_concat("ResolveError(", render(p0)), ")") };
+};
+
+fn eq_ResolveError(a: ResolveError, b: ResolveError) => Binary{1} =
+    match a { ResolveError(p0) => match b { ResolveError(q0) => bytes_eq(p0, q0) } };
+
+// What kind of refusal blocked a phylum from checking clean.
+type PhylumErrorKind = Parse | Duplicate | Check;
+
+impl Show[PhylumErrorKind] for PhylumErrorKind {
+  fn render(x: PhylumErrorKind) => Bytes =
+    match x { Parse => "Parse", Duplicate => "Duplicate", Check => "Check" };
+};
+
+fn eq_PhylumErrorKind(a: PhylumErrorKind, b: PhylumErrorKind) => Binary{1} =
+  match a { Parse => match b { Parse => 0b1, _ => 0b0 }, Duplicate => match b { Duplicate => 0b1, _ => 0b0 }, Check => match b { Check => 0b1, _ => 0b0 } };
+
+impl PhylumErrorKind {
+  // The stable lowercase tag used in the `--json` contract (`"parse"`/`"duplicate"`/`"check"`).
+  fn as_str(self: PhylumErrorKind) => Bytes = match self { Parse => "parse", Duplicate => "duplicate", Check => "check" };
+};
+
+// The single refusal that blocked a phylum (all-or-nothing — there is at most one).
+type PhylumError = PhylumError(PhylumErrorKind, Bytes, Bytes);
+
+impl Show[PhylumError] for PhylumError {
+  fn render(x: PhylumError) => Bytes =
+    match x { PhylumError(p0, p1, p2) => bytes_concat(bytes_concat(bytes_concat(bytes_concat(bytes_concat(bytes_concat("PhylumError(", render(p0)), ", "), render(p1)), ", "), render(p2)), ")") };
+};
+
+fn eq_PhylumError(a: PhylumError, b: PhylumError) => Binary{1} =
+    match a { PhylumError(p0, p1, p2) => match b { PhylumError(q0, q1, q2) => and(and(eq_PhylumErrorKind(p0, q0), bytes_eq(p1, q1)), bytes_eq(p2, q2)) } };
+
+// A per-nodule verdict class (P-A, DN-124 §2.2/§2.3). Never fabricated (G2): built either
+// trivially (the whole phylum checked clean) or by the import-closure sub-phylum re-check — always
+// grounded in a real `check_phylum` run, never guessed.
+pub type NoduleClass = Clean | CheckError(Bytes, Bytes) | Blocked(Bytes, Bytes);
+
+impl Show[NoduleClass] for NoduleClass {
+  fn render(x: NoduleClass) => Bytes =
+    match x { Clean => "Clean", CheckError(p0, p1) => bytes_concat(bytes_concat(bytes_concat(bytes_concat("CheckError(", render(p0)), ", "), render(p1)), ")"), Blocked(p0, p1) => bytes_concat(bytes_concat(bytes_concat(bytes_concat("Blocked(", render(p0)), ", "), render(p1)), ")") };
+};
+
+fn eq_NoduleClass(a: NoduleClass, b: NoduleClass) => Binary{1} =
+  match a { Clean => match b { Clean => 0b1, _ => 0b0 }, CheckError(p0, p1) => match b { CheckError(q0, q1) => and(bytes_eq(p0, q0), bytes_eq(p1, q1)), _ => 0b0 }, Blocked(p0, p1) => match b { Blocked(q0, q1) => and(bytes_eq(p0, q0), bytes_eq(p1, q1)), _ => 0b0 } };
+
+impl NoduleClass {
+  // The stable lowercase-agnostic label used in the `--json` contract
+  // (`"Clean"`/`"CheckError"`/`"Blocked"`).
+  fn label(self: NoduleClass) => Bytes = match self { Clean => "Clean", CheckError(_, _) => "CheckError", Blocked(_, _) => "Blocked" };
+};
+
+// A per-nodule verdict. As of **P-A (DN-124, Accepted 2026-07-12)** this is populated for **every**
+// nodule of a phylum that was successfully assembled (parsed, no duplicate paths) — not only on a
+// clean phylum (the pre-DN-124 all-or-nothing behavior).
+type NoduleVerdict = NoduleVerdict(Bytes, Bytes, NoduleClass);
+
+impl Show[NoduleVerdict] for NoduleVerdict {
+  fn render(x: NoduleVerdict) => Bytes =
+    match x { NoduleVerdict(p0, p1, p2) => bytes_concat(bytes_concat(bytes_concat(bytes_concat(bytes_concat(bytes_concat("NoduleVerdict(", render(p0)), ", "), render(p1)), ", "), render(p2)), ")") };
+};
+
+fn eq_NoduleVerdict(a: NoduleVerdict, b: NoduleVerdict) => Binary{1} =
+    match a { NoduleVerdict(p0, p1, p2) => match b { NoduleVerdict(q0, q1, q2) => and(and(bytes_eq(p0, q0), bytes_eq(p1, q1)), eq_NoduleClass(p2, q2)) } };

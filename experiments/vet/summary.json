@@ -1,0 +1,99 @@
+{
+  "files": [
+    {
+      "file": "/root/git/isolated/mycelium/crates/mycelium-check/src/bin/myc-check.rs",
+      "total_items": 16,
+      "non_test_items": 16,
+      "emitted": 1,
+      "gaps": 21,
+      "expressible_pct": 6.25,
+      "category_counts": {
+        "Import": 10,
+        "MultiStmtBody": 5,
+        "Other": 5,
+        "ReservedWord": 1
+      }
+    },
+    {
+      "file": "/root/git/isolated/mycelium/crates/mycelium-check/src/lib.rs",
+      "total_items": 34,
+      "non_test_items": 33,
+      "emitted": 8,
+      "gaps": 47,
+      "expressible_pct": 24.242424242424242,
+      "category_counts": {
+        "DeriveAttr": 5,
+        "DeriveSatisfied": 11,
+        "Impl": 5,
+        "Import": 5,
+        "MacroInvocation": 1,
+        "MultiStmtBody": 1,
+        "NamedFieldDrop": 4,
+        "Other": 11,
+        "Struct": 3,
+        "TestItem": 1
+      }
+    }
+  ],
+  "totals": {
+    "total_items": 50,
+    "non_test_items": 49,
+    "emitted": 9,
+    "gaps": 68,
+    "expressible_pct": 18.367346938775512,
+    "category_counts": {
+      "DeriveAttr": 5,
+      "DeriveSatisfied": 11,
+      "Impl": 5,
+      "Import": 15,
+      "MacroInvocation": 1,
+      "MultiStmtBody": 6,
+      "NamedFieldDrop": 4,
+      "Other": 16,
+      "ReservedWord": 1,
+      "Struct": 3,
+      "TestItem": 1
+    }
+  },
+  "remap": {
+    "phylum": {
+      "source_crate": "mycelium-check",
+      "target_phylum": "check"
+    },
+    "nodules": [
+      {
+        "target_nodule": "check.bin.myc-check",
+        "operation": "Keep",
+        "sources": [
+          {
+            "rust_path": "/root/git/isolated/mycelium/crates/mycelium-check/src/bin/myc-check.rs",
+            "rust_span": null,
+            "moved_items": []
+          }
+        ],
+        "rationale": "structure-preserving 1:1 (DN-109 §5.3-B v0 default: every emitted nodule keeps its source file's mod-tree position, no restructuring proposed)",
+        "safety": "Safe",
+        "api_surface_changed": false,
+        "identity_neutral": true,
+        "guarantee": "Declared"
+      },
+      {
+        "target_nodule": "check",
+        "operation": "Keep",
+        "sources": [
+          {
+            "rust_path": "/root/git/isolated/mycelium/crates/mycelium-check/src/lib.rs",
+            "rust_span": null,
+            "moved_items": []
+          }
+        ],
+        "rationale": "structure-preserving 1:1 (DN-109 §5.3-B v0 default: every emitted nodule keeps its source file's mod-tree position, no restructuring proposed)",
+        "safety": "Safe",
+        "api_surface_changed": false,
+        "identity_neutral": true,
+        "guarantee": "Declared"
+      }
+    ],
+    "idiom_choices": []
+  }
+}
